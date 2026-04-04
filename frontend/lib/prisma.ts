@@ -7,28 +7,45 @@ declare global {
 
 let prismaClient: PrismaClient | undefined;
 
-function createPrismaClient(): PrismaClient {
+function getNormalizedDatabaseUrl(): string {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  // Vercel UI can accidentally persist trailing spaces or line breaks.
+  // Normalize without altering valid URL characters.
+  const normalized = raw.replace(/[\r\n]+/g, "").trim();
+  if (!normalized) {
+    throw new Error("DATABASE_URL is empty after normalization.");
+  }
+
+  return normalized;
+}
+
+function createPrismaClient(databaseUrl: string): PrismaClient {
   return new PrismaClient({
+    datasources: {
+      db: {
+        url: databaseUrl
+      }
+    },
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
   });
 }
 
 export function getPrismaClient(): PrismaClient {
-  // Defer DATABASE_URL validation and Prisma initialization to runtime.
-  // This prevents build-time module evaluation from failing on Vercel.
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is not configured.");
-  }
+  const databaseUrl = getNormalizedDatabaseUrl();
 
   if (process.env.NODE_ENV === "production") {
     if (!prismaClient) {
-      prismaClient = createPrismaClient();
+      prismaClient = createPrismaClient(databaseUrl);
     }
     return prismaClient;
   }
 
   if (!global.prisma) {
-    global.prisma = createPrismaClient();
+    global.prisma = createPrismaClient(databaseUrl);
   }
 
   return global.prisma;
