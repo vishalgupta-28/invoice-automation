@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient } from "@/lib/prisma";
 import { serializeClient } from "@/lib/server-utils";
 import { createClientSchema } from "@/lib/validations";
 
@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
+    const prisma = getPrismaClient();
     const clients = await prisma.client.findMany({
       orderBy: { createdAt: "desc" }
     });
@@ -23,6 +24,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const prisma = getPrismaClient();
     const body: unknown = await request.json();
     const parsed = createClientSchema.safeParse(body);
 

@@ -5,12 +5,31 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma =
-  global.prisma ??
-  new PrismaClient({
+let prismaClient: PrismaClient | undefined;
+
+function createPrismaClient(): PrismaClient {
+  return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
   });
+}
 
-if (process.env.NODE_ENV !== "production") {
-  global.prisma = prisma;
+export function getPrismaClient(): PrismaClient {
+  // Defer DATABASE_URL validation and Prisma initialization to runtime.
+  // This prevents build-time module evaluation from failing on Vercel.
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    if (!prismaClient) {
+      prismaClient = createPrismaClient();
+    }
+    return prismaClient;
+  }
+
+  if (!global.prisma) {
+    global.prisma = createPrismaClient();
+  }
+
+  return global.prisma;
 }

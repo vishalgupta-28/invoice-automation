@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient } from "@/lib/prisma";
 import { createInvoiceSchema } from "@/lib/validations";
 import { generateInvoiceNumber, serializeInvoice } from "@/lib/server-utils";
 
@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
+    const prisma = getPrismaClient();
     const invoices = await prisma.invoice.findMany({
       include: { client: true },
       orderBy: { createdAt: "desc" }
@@ -25,6 +26,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const prisma = getPrismaClient();
     const body: unknown = await request.json();
     const parsed = createInvoiceSchema.safeParse(body);
 

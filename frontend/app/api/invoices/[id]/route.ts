@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient } from "@/lib/prisma";
 import { serializeInvoice } from "@/lib/server-utils";
 import { updateInvoiceSchema } from "@/lib/validations";
 
@@ -13,6 +13,7 @@ interface RouteContext {
 
 export async function GET(_: NextRequest, { params }: RouteContext) {
   try {
+    const prisma = getPrismaClient();
     const invoice = await prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -37,6 +38,7 @@ export async function GET(_: NextRequest, { params }: RouteContext) {
 
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
+    const prisma = getPrismaClient();
     const existing = await prisma.invoice.findUnique({
       where: { id: params.id }
     });
@@ -112,6 +114,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_: NextRequest, { params }: RouteContext) {
   try {
+    const prisma = getPrismaClient();
     await prisma.invoice.delete({
       where: { id: params.id }
     });
