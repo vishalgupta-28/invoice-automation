@@ -13,8 +13,15 @@ function normalizeConnectionUrl(rawValue: string): string {
     throw new Error("Database URL is empty after normalization.");
   }
 
+  // Allow values copied with wrapping quotes from dashboards/snippets.
+  const dequoted =
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+      ? normalized.slice(1, -1).trim()
+      : normalized;
+
   try {
-    const parsed = new URL(normalized);
+    const parsed = new URL(dequoted);
 
     // Prisma/Postgres can fail with `channel_binding=require` in some environments.
     // Remove it to keep connectivity consistent across local + Vercel runtimes.
@@ -27,7 +34,7 @@ function normalizeConnectionUrl(rawValue: string): string {
 
     return parsed.toString();
   } catch {
-    return normalized;
+    return dequoted;
   }
 }
 
@@ -42,20 +49,7 @@ function getNormalizedDatabaseUrl(): string {
     throw new Error("DATABASE_URL is not configured.");
   }
 
-  const normalized = normalizeConnectionUrl(raw);
-
-  // If user provided Neon pooler host, attempt a direct-host fallback automatically.
-  try {
-    const parsed = new URL(normalized);
-    if (parsed.hostname.includes("-pooler.")) {
-      parsed.hostname = parsed.hostname.replace("-pooler.", ".");
-      return parsed.toString();
-    }
-  } catch {
-    // Fall through to normalized URL.
-  }
-
-  return normalized;
+  return normalizeConnectionUrl(raw);
 }
 
 function createPrismaClient(databaseUrl: string): PrismaClient {
