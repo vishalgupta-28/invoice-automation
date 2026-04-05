@@ -32,6 +32,12 @@ function normalizeConnectionUrl(rawValue: string): string {
       parsed.searchParams.set("sslmode", "require");
     }
 
+    // Use app schema by default when missing to avoid falling back to `public`.
+    // Can be overridden with PRISMA_DB_SCHEMA.
+    if (!parsed.searchParams.get("schema")) {
+      parsed.searchParams.set("schema", process.env.PRISMA_DB_SCHEMA || "invoice_app");
+    }
+
     return parsed.toString();
   } catch {
     return dequoted;
