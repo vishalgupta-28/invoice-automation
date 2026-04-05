@@ -19,7 +19,7 @@ export function handleDatabaseError(error: unknown, fallbackMessage: string): Ne
     return null;
   }
 
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
   let target = "configured database";
   if (databaseUrl) {
     try {
