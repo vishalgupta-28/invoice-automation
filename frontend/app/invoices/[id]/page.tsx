@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { PDFPreviewModal } from "@/components/PDFPreviewModal";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,13 @@ function toBase64(bytes: Uint8Array): string {
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  const mode = searchParams.get("mode");
+  const [mode, setMode] = useState<string | null>(null);
 
   async function loadInvoice() {
     try {
@@ -47,6 +45,11 @@ export default function InvoiceDetailPage() {
   useEffect(() => {
     void loadInvoice();
   }, [params.id]);
+
+  useEffect(() => {
+    const parsed = new URLSearchParams(window.location.search);
+    setMode(parsed.get("mode"));
+  }, []);
 
   const paidAmount = useMemo(
     () =>
